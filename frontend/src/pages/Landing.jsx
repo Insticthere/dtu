@@ -71,24 +71,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="border-t border-gray-100 dark:border-gray-900" />
-
-      {/* Social proof strip */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-3 gap-8 text-center">
-          {[
-            { label: 'Expert mentors', value: '50+' },
-            { label: 'Sessions booked', value: '1,200+' },
-            { label: 'Avg. rating', value: '4.8 ★' },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* Footer */}
       <div className="border-t border-gray-100 dark:border-gray-900">

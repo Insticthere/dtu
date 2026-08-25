@@ -43,17 +43,32 @@ const MentorDirectory = () => {
       </div>
 
       {/* Search & filter bar */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-8">
-        <div className="relative flex-1 max-w-sm">
-          <Icon name="search" size={18} className="text-gray-400" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or title…" className="input-field pl-9" />
+      <div className="flex flex-col sm:flex-row items-center gap-3 mb-8">
+        <div className="relative w-full sm:max-w-sm">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <Icon name="search" size={16} />
+          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or title…"
+            className="input-field pl-9"
+          />
         </div>
-        <input type="text" value={expertise} onChange={(e) => setExpertise(e.target.value)}
-          placeholder="Filter by skill (e.g. React)…" className="input-field max-w-xs" />
+        <input
+          type="text"
+          value={expertise}
+          onChange={(e) => setExpertise(e.target.value)}
+          placeholder="Filter by skill (e.g. React)…"
+          className="input-field w-full sm:max-w-xs"
+        />
         {(search || expertise) && (
-          <button onClick={() => { setSearch(''); setExpertise(''); }} className="btn-ghost text-xs">
-            Clear
+          <button
+            onClick={() => { setSearch(''); setExpertise(''); }}
+            className="btn-ghost text-xs self-start sm:self-auto"
+          >
+            Clear filters
           </button>
         )}
       </div>
