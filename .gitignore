@@ -1,0 +1,18 @@
+# MentorConnect
+
+## Dependencies to ignore
+node_modules/
+
+# Environment variables — never commit real secrets
+.env
+
+# Frontend build output (served by Express in production)
+frontend/dist/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
