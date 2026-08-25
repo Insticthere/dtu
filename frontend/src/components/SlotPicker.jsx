@@ -1,24 +1,7 @@
 /**
- * components/SlotPicker.jsx — Grid of available time slots for booking
- *
- * Shows future AVAILABLE slots grouped by date.
- * The student clicks a slot to select it, then confirms booking.
+ * components/SlotPicker.jsx — Time slot grid with Vercel styling + dark mode
  */
 import React, { useState } from 'react';
-
-/** Format a Date to a readable date string */
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-IN', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
-  });
-};
-
-/** Format a Date to HH:MM time string */
-const formatTime = (date) => {
-  return new Date(date).toLocaleTimeString('en-IN', {
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC',
-  });
-};
 
 const SlotPicker = ({ slots, onBook, loading }) => {
   const [selected, setSelected] = useState(null);
@@ -26,18 +9,18 @@ const SlotPicker = ({ slots, onBook, loading }) => {
 
   if (!slots || slots.length === 0) {
     return (
-      <div className="text-center py-10 text-gray-500">
-        <p className="text-lg">No available slots in the next 10 days.</p>
-        <p className="text-sm mt-1">Check back later or contact the mentor directly.</p>
+      <div className="text-center py-16">
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No available slots in the next 10 days.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">Check back later or contact the mentor.</p>
       </div>
     );
   }
 
-  // Group slots by date string for display
+  // Group by date string
   const grouped = slots.reduce((acc, slot) => {
-    const dateKey = new Date(slot.date).toISOString().split('T')[0];
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(slot);
+    const key = new Date(slot.date).toISOString().split('T')[0];
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(slot);
     return acc;
   }, {});
 
@@ -53,48 +36,45 @@ const SlotPicker = ({ slots, onBook, loading }) => {
   };
 
   return (
-    <div>
-      <div className="space-y-6">
-        {Object.entries(grouped).map(([dateKey, daySlots]) => (
-          <div key={dateKey}>
-            <h4 className="text-sm font-semibold text-gray-600 mb-2">
-              {formatDate(daySlots[0].date)}
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {daySlots.map((slot) => (
+    <div className="space-y-6">
+      {Object.entries(grouped).map(([, daySlots]) => (
+        <div key={daySlots[0].date}>
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+            {formatDate(daySlots[0].date)}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {daySlots.map((slot) => {
+              const isSelected = selected?._id === slot._id;
+              return (
                 <button
                   key={slot._id}
-                  onClick={() => setSelected(slot._id === selected?._id ? null : slot)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-150 ${
-                    selected?._id === slot._id
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                  onClick={() => setSelected(isSelected ? null : slot)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-all duration-150 ${
+                    isSelected
+                      ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-black dark:border-white'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800 dark:hover:border-gray-600'
                   }`}
                 >
-                  {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
+                  {formatTime(slot.startTime)}–{formatTime(slot.endTime)}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
 
-      {/* Booking confirmation panel */}
+      {/* Confirmation panel */}
       {selected && (
-        <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-          <p className="text-sm text-blue-800 font-medium">
-            Selected: {formatDate(selected.date)} at {formatTime(selected.startTime)} – {formatTime(selected.endTime)}
+        <div className="mt-4 p-4 rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-950 animate-fade-in">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            {formatDate(selected.date)} · {formatTime(selected.startTime)}–{formatTime(selected.endTime)}
           </p>
-          <p className="text-xs text-blue-600 mt-1">All times are in UTC</p>
-          <div className="flex space-x-3 mt-3">
-            <button
-              onClick={handleConfirm}
-              disabled={confirming || loading}
-              className="btn-primary text-sm"
-            >
-              {confirming ? 'Booking...' : 'Confirm Booking'}
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">All times UTC</p>
+          <div className="flex space-x-2 mt-3">
+            <button onClick={handleConfirm} disabled={confirming || loading} className="btn-primary text-xs px-4 py-2">
+              {confirming ? 'Confirming…' : 'Confirm Booking'}
             </button>
-            <button onClick={() => setSelected(null)} className="btn-secondary text-sm">
+            <button onClick={() => setSelected(null)} className="btn-secondary text-xs px-4 py-2">
               Cancel
             </button>
           </div>

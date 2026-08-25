@@ -1,9 +1,10 @@
 /**
- * pages/MentorBookings.jsx — Mentor's incoming bookings view
+ * pages/MentorBookings.jsx — Mentor's incoming bookings (Vercel style)
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { bookingsApi } from '../api/bookings.js';
 import BookingCard from '../components/BookingCard.jsx';
+import { Alert } from '../components/ui/index.js';
 
 const MentorBookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -12,27 +13,17 @@ const MentorBookings = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
 
   const fetchBookings = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await bookingsApi.getMentorBookings();
-      setBookings(data.bookings || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true); setError('');
+    try { const d = await bookingsApi.getMentorBookings(); setBookings(d.bookings || []); }
+    catch (e) { setError(e.message); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
   const handleCancel = async (id) => {
-    try {
-      await bookingsApi.cancel(id);
-      await fetchBookings();
-    } catch (err) {
-      setError(err.message);
-    }
+    try { await bookingsApi.cancel(id); await fetchBookings(); }
+    catch (e) { setError(e.message); }
   };
 
   const now = new Date();
@@ -40,26 +31,28 @@ const MentorBookings = () => {
   const past = bookings.filter((b) => b.status !== 'CONFIRMED' || new Date(b.startTime) <= now);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">My Student Bookings</h1>
+    <div className="page-container">
+      <div className="mb-8">
+        <h1 className="page-title">Student Bookings</h1>
+        <p className="page-subtitle">Manage your incoming sessions</p>
+      </div>
 
-      <div className="flex space-x-1 mb-6 border-b border-gray-200">
-        {[['upcoming', `Upcoming (${upcoming.length})`], ['past', `Past & Other (${past.length})`]].map(([tab, label]) => (
+      <div className="flex space-x-6 border-b border-gray-200 dark:border-gray-800 mb-6">
+        {[['upcoming', 'Upcoming', upcoming.length], ['past', 'Past & Other', past.length]].map(([tab, label, count]) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-          >
-            {label}
+            className={`pb-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === tab ? 'tab-active' : 'tab-inactive'}`}>
+            {label} <span className="ml-1 text-xs opacity-50">{count}</span>
           </button>
         ))}
       </div>
 
-      {loading && <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" /></div>}
-      {error && <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-4">{error}</div>}
+      {error && <Alert type="error">{error}</Alert>}
+      {loading && <div className="flex justify-center py-16"><div className="spinner" /></div>}
 
       {!loading && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {(activeTab === 'upcoming' ? upcoming : past).length === 0 ? (
-            <p className="text-center text-gray-500 py-10">No bookings here yet.</p>
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-16">No bookings here yet.</p>
           ) : (
             (activeTab === 'upcoming' ? upcoming : past).map((b) => (
               <BookingCard key={b._id} booking={b} role="mentor" onCancel={handleCancel} onReview={() => {}} />

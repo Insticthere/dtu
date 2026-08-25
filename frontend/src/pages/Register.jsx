@@ -9,8 +9,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth.js';
 import { useAuth } from '../context/AuthContext.jsx';
-
-const ROLE_HOME = { student: '/dashboard', mentor: '/mentor/dashboard' };
+import { ROLE_HOME } from '../utils/constants.js';
 
 const Register = () => {
   const [role, setRole] = useState('student');

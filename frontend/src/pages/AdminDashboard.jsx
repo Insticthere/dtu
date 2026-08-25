@@ -1,17 +1,16 @@
 /**
- * pages/AdminDashboard.jsx — Admin overview with basic stats
+ * pages/AdminDashboard.jsx — Vercel-style admin overview
  */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../api/admin.js';
+import { Alert, Icon } from '../components/ui/index.js';
 
-const StatCard = ({ label, value, color = 'blue', icon }) => (
-  <div className="card flex items-center space-x-4">
-    <div className={`text-3xl bg-${color}-100 rounded-full p-3`}>{icon}</div>
-    <div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-sm text-gray-500">{label}</p>
-    </div>
+const StatCard = ({ label, value, sub }) => (
+  <div className="card">
+    <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">{label}</p>
+    <p className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">{value ?? '—'}</p>
+    {sub && <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">{sub}</p>}
   </div>
 );
 
@@ -22,55 +21,60 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     adminApi.getDashboard()
-      .then((data) => setStats(data.stats))
-      .catch((err) => setError(err.message))
+      .then((d) => setStats(d.stats))
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-      <p className="text-gray-500 mb-8">Platform overview and management</p>
+    <div className="page-container">
+      <div className="mb-8">
+        <h1 className="page-title">Admin Dashboard</h1>
+        <p className="page-subtitle">Platform overview</p>
+      </div>
 
-      {error && <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-6">{error}</div>}
+      {error && <Alert type="error">{error}</Alert>}
 
       {loading ? (
-        <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" /></div>
+        <div className="flex justify-center py-16"><div className="spinner" /></div>
       ) : stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          <StatCard icon="👥" label="Total Users" value={stats.totalUsers} />
-          <StatCard icon="🎓" label="Total Students" value={stats.totalStudents} color="green" />
-          <StatCard icon="🏆" label="Total Mentors" value={stats.totalMentors} color="purple" />
-          <StatCard icon="⏳" label="Pending Applications" value={stats.pendingApplications} color="yellow" />
-          <StatCard icon="✅" label="Approved Mentors" value={stats.approvedMentors} color="green" />
-          <StatCard icon="📅" label="Total Bookings" value={stats.totalBookings} color="blue" />
-        </div>
-      )}
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+            <StatCard label="Total Users" value={stats.totalUsers} />
+            <StatCard label="Students" value={stats.totalStudents} />
+            <StatCard label="Mentors" value={stats.totalMentors} />
+            <StatCard label="Pending" value={stats.pendingApplications} sub="Awaiting review" />
+            <StatCard label="Approved Mentors" value={stats.approvedMentors} />
+            <StatCard label="Total Bookings" value={stats.totalBookings} />
+          </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Link to="/admin/applications" className="card hover:shadow-md transition-shadow group">
-          <div className="flex items-center space-x-4">
-            <span className="text-3xl">📋</span>
-            <div>
-              <h2 className="font-semibold text-gray-900 group-hover:text-blue-600">Review Applications</h2>
-              <p className="text-sm text-gray-500">Approve or reject pending mentor applications</p>
-              {stats?.pendingApplications > 0 && (
-                <span className="badge-pending mt-1 inline-block">{stats.pendingApplications} pending</span>
-              )}
+          {/* Divider */}
+          <div className="divider mb-8" />
+
+          {/* Quick actions */}
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Quick Actions</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link to="/admin/applications"
+              className="card group hover:border-gray-400 dark:hover:border-gray-600 transition-all duration-200 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Review Applications</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Approve or reject mentor applications</p>
+                {stats.pendingApplications > 0 && (
+                  <span className="badge-pending mt-2 inline-block">{stats.pendingApplications} pending</span>
+                )}
+              </div>
+              <Icon name="arrow-up-right" size={16} />
+            </Link>
+
+            <div className="card bg-gray-50 dark:bg-gray-950">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Security</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Admin accounts are created only via <code className="font-mono text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">npm run seed</code> from environment variables. No public registration.
+              </p>
             </div>
           </div>
-        </Link>
-        <div className="card">
-          <div className="flex items-center space-x-4">
-            <span className="text-3xl">🔒</span>
-            <div>
-              <h2 className="font-semibold text-gray-900">Security Note</h2>
-              <p className="text-sm text-gray-500">Admin accounts are not self-registrable. Created via seed.js from environment variables only.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

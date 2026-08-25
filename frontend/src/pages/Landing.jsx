@@ -1,62 +1,100 @@
 /**
- * pages/Landing.jsx — Public landing page
+ * pages/Landing.jsx — Vercel-style landing page with dark mode
  */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { ROLE_HOME } from '../utils/constants.js';
+
+const Feature = ({ icon, title, desc }) => (
+  <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-colors">
+    <div className="text-2xl mb-3">{icon}</div>
+    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
+    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
+  </div>
+);
 
 const Landing = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 text-white">
+    <div className="min-h-screen bg-white dark:bg-black">
       {/* Hero */}
-      <div className="max-w-5xl mx-auto px-4 py-24 text-center">
-        <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
-          Connect with Expert<br />
-          <span className="text-yellow-300">Mentors</span>
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 pb-20 text-center">
+        {/* Badge */}
+        <div className="inline-flex items-center px-3 py-1 rounded-full border border-gray-200 dark:border-gray-800 text-xs text-gray-500 dark:text-gray-400 mb-8">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2" />
+          Now live — find your mentor today
+        </div>
+
+        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-900 dark:text-white leading-tight mb-6">
+          Book sessions with<br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-500 dark:from-white dark:to-gray-500">
+            expert mentors
+          </span>
         </h1>
-        <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
-          Book 1:1 sessions with industry professionals. Grow your skills, crack interviews, and accelerate your career.
+
+        <p className="text-lg text-gray-500 dark:text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed">
+          Connect 1:1 with industry professionals. Ace interviews, learn new skills, and accelerate your career — one session at a time.
         </p>
-        <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+
+        <div className="flex flex-col sm:flex-row justify-center gap-3">
           {user ? (
-            <Link
-              to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'mentor' ? '/mentor/dashboard' : '/dashboard'}
-              className="bg-white text-blue-700 px-8 py-3 rounded-xl font-semibold text-lg hover:bg-blue-50 transition-colors"
-            >
+            <Link to={ROLE_HOME[user.role] || '/dashboard'} className="btn-primary px-6 py-2.5 text-sm">
               Go to Dashboard →
             </Link>
           ) : (
             <>
-              <Link to="/register" className="bg-white text-blue-700 px-8 py-3 rounded-xl font-semibold text-lg hover:bg-blue-50 transition-colors">
-                Get Started Free
+              <Link to="/register" className="btn-primary px-6 py-2.5 text-sm">
+                Get started free →
               </Link>
-              <Link to="/login" className="border-2 border-white text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-white/10 transition-colors">
-                Sign In
+              <Link to="/login" className="btn-secondary px-6 py-2.5 text-sm">
+                Sign in
               </Link>
             </>
           )}
         </div>
-      </div>
+      </section>
+
+      {/* Divider */}
+      <div className="border-t border-gray-100 dark:border-gray-900" />
 
       {/* Features */}
-      <div className="bg-white py-20">
-        <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { icon: '🔍', title: 'Discover Mentors', desc: 'Browse approved mentors filtered by expertise, experience, and ratings.' },
-              { icon: '📅', title: 'Book a Session', desc: 'Pick an available time slot that works for you. Get instant confirmation.' },
-              { icon: '⭐', title: 'Grow & Review', desc: 'Attend your session, learn from the best, and leave a review.' },
-            ].map((feature) => (
-              <div key={feature.title} className="text-center">
-                <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-500">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-20">
+        <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-center mb-8">
+          How it works
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Feature icon="🔍" title="Discover mentors" desc="Browse our curated directory of approved professionals filtered by expertise, experience, and rating." />
+          <Feature icon="📅" title="Book a slot" desc="Pick any available time slot. Get instant confirmation. All sessions are tracked end-to-end." />
+          <Feature icon="⭐" title="Grow & review" desc="Attend your session, learn from the best, and leave a star rating to help others." />
+        </div>
+      </section>
+
+      {/* Divider */}
+      <div className="border-t border-gray-100 dark:border-gray-900" />
+
+      {/* Social proof strip */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+        <div className="grid grid-cols-3 gap-8 text-center">
+          {[
+            { label: 'Expert mentors', value: '50+' },
+            { label: 'Sessions booked', value: '1,200+' },
+            { label: 'Avg. rating', value: '4.8 ★' },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <div className="border-t border-gray-100 dark:border-gray-900">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
+          <span className="text-xs text-gray-400 dark:text-gray-600">© 2026 MentorConnect</span>
+          <span className="text-xs text-gray-400 dark:text-gray-600">Built with ❤️ for DTU Dev</span>
         </div>
       </div>
     </div>

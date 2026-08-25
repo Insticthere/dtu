@@ -5,10 +5,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authApi } from '../api/auth.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { ROLE_HOME } from '../utils/constants.js';
 
 // Dashboard redirect map per role
-const ROLE_HOME = { student: '/dashboard', mentor: '/mentor/dashboard', admin: '/admin/dashboard' };
-
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

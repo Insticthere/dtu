@@ -1,22 +1,9 @@
 /**
- * components/BookingCard.jsx — Displays a single booking for student or mentor
- *
- * Props:
- *   booking  — booking object (with populated slot, mentor, student)
- *   role     — 'student' or 'mentor' (determines which side to show)
- *   onCancel — callback to cancel the booking
- *   onReview — callback to leave a review (student only, COMPLETED bookings)
+ * components/BookingCard.jsx — Vercel-style booking card with dark mode
  */
 import React, { useState } from 'react';
+import { STATUS_BADGE_CLASS } from '../utils/constants.js';
 
-const formatDateTime = (date) => {
-  return new Date(date).toLocaleString('en-IN', {
-    weekday: 'short', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC',
-  });
-};
-
-// Map booking status to Tailwind badge class
 const STATUS_BADGE = {
   CONFIRMED: 'badge-confirmed',
   COMPLETED: 'badge-completed',
@@ -31,50 +18,52 @@ const BookingCard = ({ booking, role, onCancel, onReview }) => {
   const canReview = role === 'student' && booking.status === 'COMPLETED' && !booking.hasReview;
 
   const handleCancel = async () => {
-    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+    if (!window.confirm('Cancel this booking? The slot will become available again.')) return;
     setCancelling(true);
-    try {
-      await onCancel(booking._id);
-    } finally {
-      setCancelling(false);
-    }
+    try { await onCancel(booking._id); }
+    finally { setCancelling(false); }
   };
 
+  const otherParty = role === 'student' ? booking.mentor?.name : booking.student?.name;
+  const otherLabel = role === 'student' ? 'Mentor' : 'Student';
+
   return (
-    <div className="card border-l-4 border-l-blue-400">
-      <div className="flex items-start justify-between">
-        <div>
-          {/* Show the other party's name depending on role */}
-          <p className="font-semibold text-gray-900">
-            {role === 'student' ? `Mentor: ${booking.mentor?.name || 'Unknown'}` : `Student: ${booking.student?.name || 'Unknown'}`}
-          </p>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {formatDateTime(booking.startTime)} → {formatDateTime(booking.endTime)} (UTC)
+    <div className="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-start space-x-4 min-w-0">
+        {/* Avatar */}
+        <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
+          <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+            {otherParty?.charAt(0) || '?'}
+          </span>
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-900 dark:text-white">{otherParty}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-600">{otherLabel}</span>
+            <span className={STATUS_BADGE_CLASS[booking.status]}>{booking.status}</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {formatDateTime(booking.startTime)} → {formatDateTime(booking.endTime)} UTC
           </p>
         </div>
-        <span className={STATUS_BADGE[booking.status] || 'badge-pending'}>
-          {booking.status}
-        </span>
       </div>
 
       {/* Actions */}
-      <div className="mt-4 flex space-x-3">
+      <div className="flex items-center space-x-2 shrink-0">
         {canCancel && (
-          <button
-            onClick={handleCancel}
-            disabled={cancelling}
-            className="btn-danger text-sm"
-          >
-            {cancelling ? 'Cancelling...' : 'Cancel Booking'}
+          <button onClick={handleCancel} disabled={cancelling} className="btn-danger text-xs px-3 py-1.5">
+            {cancelling ? 'Cancelling…' : 'Cancel'}
           </button>
         )}
         {canReview && (
-          <button
-            onClick={() => onReview(booking)}
-            className="btn-primary text-sm"
-          >
+          <button onClick={() => onReview(booking)} className="btn-primary text-xs px-3 py-1.5">
             Leave Review
           </button>
+        )}
+        {booking.status === 'CANCELLED' && (
+          <span className="text-xs text-gray-400 dark:text-gray-600">
+            Cancelled {booking.cancelledAt ? new Date(booking.cancelledAt).toLocaleDateString('en-GB') : ''}
+          </span>
         )}
       </div>
     </div>

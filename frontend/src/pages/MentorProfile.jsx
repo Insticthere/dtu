@@ -1,6 +1,5 @@
 /**
- * pages/MentorProfile.jsx — Individual mentor profile page
- * Shows mentor details, available slots for booking, and reviews.
+ * pages/MentorProfile.jsx — Vercel-style individual mentor page
  */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,161 +7,129 @@ import { mentorsApi } from '../api/mentors.js';
 import { bookingsApi } from '../api/bookings.js';
 import SlotPicker from '../components/SlotPicker.jsx';
 
-const MentorProfile = () => {
-  const { id } = useParams(); // mentor's user ID
-  const navigate = useNavigate();
+const Tab = ({ id, label, active, count, onClick }) => (
+  <button onClick={() => onClick(id)}
+    className={`px-1 pb-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+      active ? 'tab-active' : 'tab-inactive'
+    }`}>
+    {label} {count !== undefined && <span className="ml-1 text-xs opacity-50">{count}</span>}
+  </button>
+);
 
+const MentorProfile = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [mentor, setMentor] = useState(null);
   const [slots, setSlots] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [bookingError, setBookingError] = useState('');
-  const [bookingSuccess, setBookingSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState('slots'); // 'slots' | 'reviews'
+  const [bookingMsg, setBookingMsg] = useState({ type: '', text: '' });
+  const [activeTab, setActiveTab] = useState('slots');
 
   useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        const [mentorData, slotsData, reviewsData] = await Promise.all([
-          mentorsApi.getById(id),
-          mentorsApi.getSlots(id),
-          mentorsApi.getReviews(id),
-        ]);
-        setMentor(mentorData.mentor);
-        setSlots(slotsData.slots || []);
-        setReviews(reviewsData.reviews || []);
-      } catch (err) {
-        // If mentor not found (404), redirect to directory
-        navigate('/mentors');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
+    Promise.all([mentorsApi.getById(id), mentorsApi.getSlots(id), mentorsApi.getReviews(id)])
+      .then(([m, s, r]) => { setMentor(m.mentor); setSlots(s.slots || []); setReviews(r.reviews || []); })
+      .catch(() => navigate('/mentors'))
+      .finally(() => setLoading(false));
   }, [id, navigate]);
 
   const handleBook = async (slotId) => {
-    setBookingError('');
-    setBookingSuccess('');
+    setBookingMsg({ type: '', text: '' });
     try {
       await bookingsApi.create(id, slotId);
-      setBookingSuccess('🎉 Booking confirmed! Check My Bookings for details.');
-      // Remove the booked slot from the list immediately (optimistic UI)
-      setSlots((prev) => prev.filter((s) => s._id !== slotId));
+      setBookingMsg({ type: 'success', text: 'Booking confirmed! Check My Bookings for details.' });
+      setSlots((p) => p.filter((s) => s._id !== slotId));
     } catch (err) {
-      setBookingError(err.message);
+      setBookingMsg({ type: 'error', text: err.message });
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
-
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
+      <div className="spinner" />
+    </div>
+  );
   if (!mentor) return null;
 
   const { user, professionalTitle, expertise, yearsOfExperience, bio, profileUrl, averageRating, totalReviews, preferredSessionDuration } = mentor;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      {/* Profile Header */}
+    <div className="page-container max-w-3xl">
+      {/* Profile card */}
       <div className="card mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{user?.name}</h1>
-            <p className="text-gray-500 mt-1">{professionalTitle}</p>
+        <div className="flex items-start gap-4">
+          {/* Large avatar */}
+          <div className="w-16 h-16 rounded-2xl bg-gray-900 dark:bg-white flex items-center justify-center shrink-0">
+            <span className="text-2xl font-bold text-white dark:text-black">{user?.name?.charAt(0)}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{user?.name}</h1>
+              {totalReviews > 0 && (
+                <span className="flex items-center gap-1 text-sm text-amber-500 font-medium">
+                  ★ {averageRating.toFixed(1)}
+                  <span className="text-gray-400 dark:text-gray-600 text-xs font-normal">({totalReviews})</span>
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{professionalTitle}</p>
             {profileUrl && (
-              <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline mt-1 inline-block">
-                🔗 View Profile
+              <a href={profileUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white mt-1 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                View LinkedIn
               </a>
             )}
           </div>
-          <div className="text-right">
-            {totalReviews > 0 ? (
-              <div>
-                <div className="flex items-center justify-end space-x-1">
-                  <span className="text-yellow-400 text-xl">★</span>
-                  <span className="text-2xl font-bold text-gray-800">{averageRating.toFixed(1)}</span>
-                </div>
-                <p className="text-sm text-gray-400">{totalReviews} review{totalReviews !== 1 ? 's' : ''}</p>
-              </div>
-            ) : (
-              <span className="text-gray-400 text-sm">No reviews yet</span>
-            )}
-          </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {expertise.map((tag) => (
-            <span key={tag} className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-100">
-              {tag}
-            </span>
-          ))}
+        <div className="flex flex-wrap gap-1.5 mt-4">
+          {expertise.map((t) => <span key={t} className="tag">{t}</span>)}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-gray-600">
-          <div><span className="font-medium">Experience:</span> {yearsOfExperience} years</div>
-          <div><span className="font-medium">Session:</span> {preferredSessionDuration} minutes</div>
+        <div className="flex items-center gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
+          <span>{yearsOfExperience}y experience</span>
+          <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
+          <span>{preferredSessionDuration} min sessions</span>
         </div>
 
-        <div className="mt-4 border-t border-gray-100 pt-4">
-          <p className="text-sm text-gray-600 leading-relaxed">{bio}</p>
-        </div>
+        <div className="divider mt-4 mb-3" />
+        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{bio}</p>
       </div>
 
-      {/* Success/Error alerts for booking */}
-      {bookingSuccess && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">{bookingSuccess}</div>
-      )}
-      {bookingError && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">{bookingError}</div>
+      {/* Booking alerts */}
+      {bookingMsg.text && (
+        <div className={`mb-4 ${bookingMsg.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+          {bookingMsg.text}
+        </div>
       )}
 
-      {/* Tabs: Slots / Reviews */}
-      <div className="flex space-x-1 mb-6 border-b border-gray-200">
-        {['slots', 'reviews'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors -mb-px ${
-              activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab === 'slots' ? `Available Slots (${slots.length})` : `Reviews (${reviews.length})`}
-          </button>
-        ))}
+      {/* Tabs */}
+      <div className="flex space-x-6 border-b border-gray-200 dark:border-gray-800 mb-6">
+        <Tab id="slots" label="Available Slots" count={slots.length} active={activeTab === 'slots'} onClick={setActiveTab} />
+        <Tab id="reviews" label="Reviews" count={reviews.length} active={activeTab === 'reviews'} onClick={setActiveTab} />
       </div>
 
-      {activeTab === 'slots' && (
-        <SlotPicker slots={slots} onBook={handleBook} />
-      )}
+      {activeTab === 'slots' && <SlotPicker slots={slots} onBook={handleBook} />}
 
       {activeTab === 'reviews' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {reviews.length === 0 ? (
-            <p className="text-gray-500 text-center py-10">No reviews yet. Be the first!</p>
-          ) : (
-            reviews.map((review) => (
-              <div key={review._id} className="card">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-800">{review.student?.name || 'Anonymous'}</span>
-                  <div className="flex items-center space-x-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span key={star} className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
-                    ))}
-                  </div>
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-12">No reviews yet.</p>
+          ) : reviews.map((r) => (
+            <div key={r._id} className="card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{r.student?.name}</span>
+                <div className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map((s) => (
+                    <span key={s} className={`text-sm ${s <= r.rating ? 'text-amber-400' : 'text-gray-200 dark:text-gray-800'}`}>★</span>
+                  ))}
                 </div>
-                {review.feedback && (
-                  <p className="text-sm text-gray-600 mt-2">{review.feedback}</p>
-                )}
-                <p className="text-xs text-gray-400 mt-2">{new Date(review.createdAt).toLocaleDateString('en-IN')}</p>
               </div>
-            ))
-          )}
+              {r.feedback && <p className="text-sm text-gray-600 dark:text-gray-400">{r.feedback}</p>}
+              <p className="text-xs text-gray-400 dark:text-gray-600 mt-2">{new Date(r.createdAt).toLocaleDateString('en-GB')}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
