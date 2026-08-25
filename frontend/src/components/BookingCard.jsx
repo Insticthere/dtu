@@ -3,12 +3,7 @@
  */
 import React, { useState } from 'react';
 import { STATUS_BADGE_CLASS } from '../utils/constants.js';
-
-const STATUS_BADGE = {
-  CONFIRMED: 'badge-confirmed',
-  COMPLETED: 'badge-completed',
-  CANCELLED: 'badge-cancelled',
-};
+import { formatDateTime } from '../utils/format.js';
 
 const BookingCard = ({ booking, role, onCancel, onReview }) => {
   const [cancelling, setCancelling] = useState(false);

@@ -2,6 +2,7 @@
  * components/SlotPicker.jsx — Time slot grid with Vercel styling + dark mode
  */
 import React, { useState } from 'react';
+import { formatDate, formatTime } from '../utils/format.js';
 
 const SlotPicker = ({ slots, onBook, loading }) => {
   const [selected, setSelected] = useState(null);
