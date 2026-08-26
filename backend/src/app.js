@@ -57,10 +57,10 @@ app.use('/api/mentor', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/admin', adminRoutes);
 
-// ── Static frontend (production only) ────────────────────────────────────────
-// In production, Express serves the Vite build output so the whole app runs
-// as a single process on a single port — no separate frontend server needed.
-if (process.env.NODE_ENV === 'production') {
+// ── Static frontend (production only, non-serverless) ────────────────────────
+// In production (standalone node server), Express serves the Vite build output.
+// On Vercel, static files are served directly by Vercel CDN.
+if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
   // Serve the built React app's static files.
   const distPath = path.resolve(__dirname, '../../frontend/dist');
   app.use(express.static(distPath));
@@ -77,8 +77,12 @@ if (process.env.NODE_ENV === 'production') {
 // Must come after all routes. Any error thrown or passed to next(err) lands here.
 app.use(errorHandler);
 
-// ── Start server ──────────────────────────────────────────────────────────────
+// ── Start server (only when run directly / locally, not in serverless) ────────
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  });
+}
+
+export default app;

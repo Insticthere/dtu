@@ -9,6 +9,11 @@
 import mongoose from 'mongoose';
 
 const connectDB = async () => {
+  // Reuse existing connection if already connected (important for serverless invocations)
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
+
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       // These options are no longer needed in Mongoose 8+ (they're defaults),
@@ -25,9 +30,12 @@ const connectDB = async () => {
     }
   } catch (err) {
     console.error(`❌ MongoDB connection error: ${err.message}`);
-    // Exit with failure code — nodemon will restart in dev if desired,
-    // but in prod we want the process to die so a process manager can alert.
-    process.exit(1);
+    // Exit with failure code in standalone dev/prod so process manager can alert,
+    // but in serverless throw error to let function response handle failure.
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
+    throw err;
   }
 };
 
