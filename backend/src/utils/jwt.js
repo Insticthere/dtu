@@ -18,6 +18,10 @@ import jwt from 'jsonwebtoken';
  * @param {Object} user - Mongoose User document (or plain object with the same fields)
  * @returns {string} Signed JWT string
  */
+const getJwtSecret = () => {
+  return process.env.JWT_SECRET || 'mentorconnect_fallback_jwt_secret_key_32bytes';
+};
+
 export const signToken = (user) => {
   return jwt.sign(
     {
@@ -26,20 +30,13 @@ export const signToken = (user) => {
       email: user.email,
       role: user.role,
     },
-    process.env.JWT_SECRET,
+    getJwtSecret(),
     {
       expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     }
   );
 };
 
-/**
- * verifyToken — synchronously verifies a JWT and returns the decoded payload.
- * Throws JsonWebTokenError or TokenExpiredError on failure.
- *
- * @param {string} token - JWT string to verify
- * @returns {Object} Decoded payload
- */
 export const verifyToken = (token) => {
-  return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, getJwtSecret());
 };

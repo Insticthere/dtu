@@ -19,8 +19,8 @@
  * error-handling middleware by the presence of the fourth `err` parameter).
  */
 const errorHandler = (err, req, res, next) => {
-  // Log for debugging — in production, swap this for a structured logger (Winston, Pino)
-  console.error(`[Error] ${req.method} ${req.path} —`, err.message);
+  // Log full error for debugging in Render/server logs
+  console.error(`[Error] ${req.method} ${req.path} —`, err);
 
   // Mongoose ValidationError: schema-level validation failures
   if (err.name === 'ValidationError') {
@@ -29,25 +29,24 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // Mongoose CastError: happens when an invalid ObjectId is passed in a URL param
-  // e.g. GET /api/mentors/not-a-valid-id → 400 instead of a confusing 500
   if (err.name === 'CastError') {
     return res.status(400).json({ message: `Invalid ${err.path}: ${err.value}` });
   }
 
-  // MongoDB duplicate key (code 11000): e.g. registering with an already-used email
+  // MongoDB duplicate key (code 11000)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue || {})[0] || 'field';
     return res.status(409).json({ message: `A record with this ${field} already exists.` });
   }
 
-  // Application-level errors (route handlers create these via: const e = new Error('...'); e.status = 400; throw e)
+  // Application-level errors
   if (err.status) {
     return res.status(err.status).json({ message: err.message });
   }
 
-  // Catch-all: unexpected server error — don't leak stack traces in production
+  // Catch-all 500 error
   return res.status(500).json({
-    message: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred.' : err.message,
+    message: err.message || 'An unexpected error occurred.',
   });
 };
 
