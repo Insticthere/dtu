@@ -7,6 +7,7 @@ node_modules/
 .env
 
 # Frontend build output (served by Express in production)
+dist/
 frontend/dist/
 
 # OS junk

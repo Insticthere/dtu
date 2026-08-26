@@ -27,6 +27,10 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    outDir: '../dist',
+    emptyOutDir: true,
+  },
 
   // Read .env from the project root, not from frontend/
   envDir: path.resolve(__dirname, '..'),

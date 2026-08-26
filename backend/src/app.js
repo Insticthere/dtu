@@ -61,8 +61,8 @@ app.use('/api/admin', adminRoutes);
 // In production (standalone node server), Express serves the Vite build output.
 // On Vercel, static files are served directly by Vercel CDN.
 if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
-  // Serve the built React app's static files.
-  const distPath = path.resolve(__dirname, '../../frontend/dist');
+  // Serve the built React app's static files (root dist or frontend/dist).
+  const distPath = path.resolve(__dirname, '../../dist');
   app.use(express.static(distPath));
 
   // Catch-all: for any route that is NOT /api/*, return index.html so that
