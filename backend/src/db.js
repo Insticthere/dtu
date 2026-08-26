@@ -30,12 +30,6 @@ const connectDB = async () => {
     }
   } catch (err) {
     console.error(`❌ MongoDB connection error: ${err.message}`);
-    // Exit with failure code in standalone dev/prod so process manager can alert,
-    // but in serverless throw error to let function response handle failure.
-    if (!process.env.VERCEL) {
-      process.exit(1);
-    }
-    throw err;
   }
 };
 
