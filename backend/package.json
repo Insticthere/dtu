@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/app.js",
+    "build": "echo 'No backend build required'",
     "start": "node src/app.js",
     "seed": "node src/seed.js"
   },
