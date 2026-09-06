@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: legal-metrology-system
+    env: node
+    plan: free
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm run start:backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        value: mongodb+srv://omgnitingupta_db_user:xEzb1lZ8gCOjudHY@cluster0.ic8gnf8.mongodb.net/legal_metrology?retryWrites=true&w=majority
+      - key: JWT_SECRET
+        value: legal_metrology_jwt_secret_key_super_secure_2026
+      - key: BASE_URL
+        sync: false
