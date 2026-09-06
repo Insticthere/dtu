@@ -15,4 +15,6 @@ services:
       - key: JWT_SECRET
         value: legal_metrology_jwt_secret_key_super_secure_2026
       - key: BASE_URL
-        sync: false
+        value: https://dtu-a8sz.onrender.com
+      - key: STORAGE_PROVIDER
+        value: local
