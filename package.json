@@ -1,0 +1,24 @@
+{
+  "name": "legal-metrology-verification-system",
+  "version": "1.0.0",
+  "description": "National Legal Metrology Verification System MVP (Backend API + React Frontend)",
+  "scripts": {
+    "dev": "npm run start:backend & npm run start:frontend",
+    "start:backend": "cd backend && npm run dev",
+    "start:frontend": "cd frontend && npm run dev",
+    "seed": "cd backend && npm run seed",
+    "test": "cd backend && node src/testIntegration.js",
+    "build": "cd frontend && npm run build"
+  },
+  "keywords": [
+    "legal-metrology",
+    "verification",
+    "stamping",
+    "india",
+    "weights-and-measures",
+    "qr-code",
+    "rbac"
+  ],
+  "author": "e-Metrology Team",
+  "license": "MIT"
+}

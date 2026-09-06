@@ -1,0 +1,274 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../api/client';
+import StatusBadge from '../components/StatusBadge';
+import {
+  Scale,
+  Users,
+  ShieldCheck,
+  AlertTriangle,
+  Layers,
+  FileCheck,
+  UserCheck,
+  Calendar,
+  Building,
+  Plus
+} from 'lucide-react';
+
+export default function AdminDashboard() {
+  const [summary, setSummary] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [officers, setOfficers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [allocatingAppId, setAllocatingAppId] = useState(null);
+  const [selectedOfficerId, setSelectedOfficerId] = useState('');
+
+  useEffect(() => {
+    loadAdminData();
+  }, []);
+
+  const loadAdminData = async () => {
+    try {
+      setLoading(true);
+      const [sumRes, appRes, offRes] = await Promise.all([
+        api.get('/dashboard/summary'),
+        api.get('/applications'),
+        api.get('/users/officers')
+      ]);
+
+      setSummary(sumRes.data);
+      setApplications(appRes.data.applications || []);
+      setOfficers(offRes.data.officers || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAllocate = async (appId) => {
+    if (!selectedOfficerId) {
+      alert('Please select an officer to assign.');
+      return;
+    }
+
+    try {
+      await api.patch(`/applications/${appId}/schedule`, {
+        assignedOfficerId: selectedOfficerId,
+        scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      });
+      setAllocatingAppId(null);
+      setSelectedOfficerId('');
+      loadAdminData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to allocate officer.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
+        <p className="text-slate-500 text-sm mt-3">Loading State Legal Metrology Console...</p>
+      </div>
+    );
+  }
+
+  const metrics = summary?.metrics || {};
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      {/* Header Banner */}
+      <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-black">
+              State Metrology Administration HQ
+            </h1>
+            <span className="bg-purple-500/20 text-purple-300 text-xs font-bold px-2.5 py-0.5 rounded-full border border-purple-400/30">
+              Controller Portal
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Directorate of Legal Metrology • State-Wide Application Allocation & Category Management
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin/categories"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-xs font-bold shadow-md transition-all"
+          >
+            <Layers className="w-4 h-4" />
+            Manage Dynamic Categories
+          </Link>
+        </div>
+      </div>
+
+      {/* State-Wide Metrics Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-blue-50 text-blue-700 rounded-xl">
+            <Scale className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs text-slate-500 font-semibold uppercase">Total Instruments</span>
+            <div className="text-2xl font-black text-slate-900">{metrics.totalInstruments || 0}</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-emerald-50 text-emerald-700 rounded-xl">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs text-slate-500 font-semibold uppercase">Active & Certified</span>
+            <div className="text-2xl font-black text-emerald-700">{metrics.activeVerifiedInstruments || 0}</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-amber-50 text-amber-700 rounded-xl">
+            <FileCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs text-slate-500 font-semibold uppercase">Pending Allocation</span>
+            <div className="text-2xl font-black text-amber-700">{metrics.pendingApplications || 0}</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-purple-50 text-purple-700 rounded-xl">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs text-slate-500 font-semibold uppercase">Registered Officers</span>
+            <div className="text-2xl font-black text-purple-700">{metrics.totalOfficers || 0}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Breakdown Badges */}
+      {summary?.categoryBreakdown && summary.categoryBreakdown.length > 0 && (
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-blue-600" />
+            Active Instrument Category Distribution
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {summary.categoryBreakdown.map((cat, idx) => (
+              <div key={idx} className="bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
+                <span className="font-semibold text-slate-800">{cat.name}:</span>
+                <span className="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">{cat.count} Units</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Application Allocation Management Table */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-blue-700" />
+              State Application Allocation Queue
+            </h2>
+            <p className="text-xs text-slate-500">Assign incoming verification requests to LMO Inspectors or GATC Centres</p>
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-100 overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
+              <tr>
+                <th className="px-5 py-3">App Number</th>
+                <th className="px-5 py-3">Instrument Category</th>
+                <th className="px-5 py-3">Applicant / Trader</th>
+                <th className="px-5 py-3">District</th>
+                <th className="px-5 py-3">Assigned Officer</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3 text-right">Allocation Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {applications.map((app) => (
+                <tr key={app._id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="px-5 py-4 font-mono font-bold text-blue-900">
+                    {app.applicationNumber}
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="font-semibold text-slate-900">{app.instrumentId?.make} {app.instrumentId?.model}</div>
+                    <div className="text-[11px] text-slate-500">{app.instrumentId?.categoryId?.name}</div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="font-medium text-slate-900">{app.userId?.name}</div>
+                    <div className="text-[11px] text-slate-500">{app.userId?.orgDetails?.companyName || 'Trader'}</div>
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {app.instrumentId?.location?.district}
+                  </td>
+                  <td className="px-5 py-4">
+                    {app.assignedOfficerId ? (
+                      <span className="font-semibold text-slate-800 flex items-center gap-1">
+                        <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                        {app.assignedOfficerId.name} ({app.assignedOfficerId.badgeNumber || 'LMO'})
+                      </span>
+                    ) : (
+                      <span className="text-amber-600 font-medium">Unassigned</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4">
+                    <StatusBadge status={app.status} />
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    {allocatingAppId === app._id ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <select
+                          value={selectedOfficerId}
+                          onChange={(e) => setSelectedOfficerId(e.target.value)}
+                          className="text-xs rounded-lg border-slate-300 border p-1 bg-white"
+                        >
+                          <option value="">-- Choose Officer --</option>
+                          {officers.map((off) => (
+                            <option key={off._id} value={off._id}>
+                              {off.name} ({off.role.toUpperCase()} - {off.badgeNumber})
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => handleAllocate(app._id)}
+                          className="px-2.5 py-1 bg-blue-700 text-white rounded text-xs font-bold"
+                        >
+                          Assign
+                        </button>
+                        <button
+                          onClick={() => setAllocatingAppId(null)}
+                          className="px-2 py-1 bg-slate-200 text-slate-700 rounded text-xs"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setAllocatingAppId(app._id);
+                          setSelectedOfficerId(app.assignedOfficerId?._id || '');
+                        }}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+                      >
+                        {app.assignedOfficerId ? 'Re-assign' : 'Assign Officer'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  );
+}
