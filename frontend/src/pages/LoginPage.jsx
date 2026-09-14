@@ -20,9 +20,17 @@ export default function LoginPage() {
 
     try {
       const loggedUser = await login(email, password);
-      if (loggedUser.role === 'admin') navigate('/admin');
-      else if (loggedUser.role === 'lmo' || loggedUser.role === 'gatc') navigate('/officer');
-      else navigate('/dashboard');
+      // Redirect to the originally requested page, or role default dashboard
+      const from = location.state?.from?.pathname;
+      if (from && from !== '/login') {
+        navigate(from, { replace: true });
+      } else if (loggedUser.role === 'admin') {
+        navigate('/admin');
+      } else if (loggedUser.role === 'lmo' || loggedUser.role === 'gatc') {
+        navigate('/officer');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
     } finally {

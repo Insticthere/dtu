@@ -114,7 +114,7 @@ export default function Navbar() {
                     </>
                   )}
 
-                  {(user.role === 'lmo' || user.role === 'gatc') && (
+                  {(user.role === 'lmo' || user.role === 'gatc' || user.role === 'admin') && (
                     <>
                       <Link
                         to="/officer"
@@ -258,7 +258,7 @@ export default function Navbar() {
                     </Link>
                   </>
                 )}
-                {(user.role === 'lmo' || user.role === 'gatc') && (
+                {(user.role === 'lmo' || user.role === 'gatc' || user.role === 'admin') && (
                   <Link
                     to="/officer"
                     onClick={() => setMobileMenuOpen(false)}

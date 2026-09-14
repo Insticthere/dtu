@@ -23,6 +23,7 @@ export default function ApplicationDetailPage() {
   const navigate = useNavigate();
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadApplication();
@@ -31,10 +32,12 @@ export default function ApplicationDetailPage() {
   const loadApplication = async () => {
     try {
       setLoading(true);
+      setError('');
       const res = await api.get(`/applications/${id}`);
       setApplication(res.data.application);
     } catch (err) {
       console.error(err);
+      setError(err.response?.data?.message || 'Failed to load application details.');
     } finally {
       setLoading(false);
     }
@@ -47,7 +50,8 @@ export default function ApplicationDetailPage() {
   if (!application) {
     return (
       <div className="p-12 text-center text-slate-500">
-        Application not found. <Link to="/dashboard" className="text-blue-700 underline">Back to dashboard</Link>
+        <p className="text-rose-600 font-semibold mb-2">{error || 'Application not found.'}</p>
+        <Link to="/dashboard" className="text-blue-700 underline">Back to dashboard</Link>
       </div>
     );
   }

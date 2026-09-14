@@ -11,6 +11,34 @@ const maskName = (name) => {
   }).join(' ');
 };
 
+// @route   GET /api/verify/search/:certNumber
+// @desc    PUBLIC — Search certificate by Certificate Number or Application Number
+// @access  Public
+// IMPORTANT: This route MUST be before /:qrToken to avoid being swallowed by the wildcard
+router.get('/search/:certNumber', async (req, res) => {
+  try {
+    const certNumber = req.params.certNumber.trim();
+    const certificate = await Certificate.findOne({
+      certificateNumber: { $regex: new RegExp(`^${certNumber}$`, 'i') }
+    });
+
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: `No certificate found matching number '${certNumber}'`
+      });
+    }
+
+    res.json({
+      success: true,
+      qrToken: certificate.qrToken,
+      certificateNumber: certificate.certificateNumber,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // @route   GET /api/verify/:qrToken
 // @desc    PUBLIC, NO AUTH — Verification by QR Token (powers the QR code scan page)
 // @access  Public
@@ -74,33 +102,6 @@ router.get('/:qrToken', async (req, res) => {
     });
   } catch (err) {
     console.error('Verify error:', err);
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-// @route   GET /api/verify/search/:certNumber
-// @desc    PUBLIC — Search certificate by Certificate Number or Application Number
-// @access  Public
-router.get('/search/:certNumber', async (req, res) => {
-  try {
-    const certNumber = req.params.certNumber.trim();
-    const certificate = await Certificate.findOne({
-      certificateNumber: { $regex: new RegExp(`^${certNumber}$`, 'i') }
-    });
-
-    if (!certificate) {
-      return res.status(404).json({
-        success: false,
-        message: `No certificate found matching number '${certNumber}'`
-      });
-    }
-
-    res.json({
-      success: true,
-      qrToken: certificate.qrToken,
-      certificateNumber: certificate.certificateNumber,
-    });
-  } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });

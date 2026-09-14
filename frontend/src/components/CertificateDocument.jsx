@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { Printer, Download, ShieldCheck, CheckCircle2, Award, Calendar, Hash, UserCheck } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -20,34 +20,69 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
   };
 
   const handleDownloadPDF = async () => {
-    // If backend PDF is available, download directly from backend
+    // If backend-generated PDF is available, download directly
     if (certificate.pdfPath) {
       window.open(`/api/certificates/${certificate.certificateNumber}/download`, '_blank');
       return;
     }
 
-    // Fallback: Client-side PDF generation using html2canvas & jsPDF
+    // Fallback: Client-side PDF generation using html2canvas + jsPDF
     if (!certRef.current) return;
     try {
       const element = certRef.current;
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+
+      // html2canvas options: useCORS for external assets, scale for quality
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 295;
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
       let heightLeft = imgHeight;
       let position = 0;
 
+      // Add first page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if content overflows
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`Certificate_${certificate.certificateNumber}.pdf`);
     } catch (err) {
       console.error('Error generating PDF:', err);
+      // Final fallback: browser print dialog
       window.print();
     }
   };
 
-  const verificationUrl = certificate.verificationUrl || `${window.location.origin}/verify/${certificate.qrToken}`;
+  const verificationUrl = certificate.verificationUrl ||
+    `${window.location.origin}/verify/${certificate.qrToken}`;
+
+  // Display name: prefer company name, mask personal name for privacy
+  const displayOwnerName = owner.orgDetails?.companyName ||
+    owner.maskedName ||
+    owner.name ||
+    'Authorized User';
 
   return (
     <div className="max-w-4xl mx-auto my-6">
@@ -99,12 +134,12 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
             Directorate of Legal Metrology
           </h2>
           <p className="text-xs text-slate-600 italic font-sans">
-            (Issued under the Legal Metrology Act, 2009 & Legal Metrology General Rules, 2011)
+            (Issued under the Legal Metrology Act, 2009 &amp; Legal Metrology General Rules, 2011)
           </p>
 
           {/* Certificate Title Badge */}
           <div className="inline-block mt-4 mb-2 px-6 py-1.5 bg-emerald-50 border-2 border-emerald-600 rounded text-emerald-900 font-sans font-bold text-sm sm:text-base uppercase tracking-widest">
-            Certificate of Verification & Stamping
+            Certificate of Verification &amp; Stamping
           </div>
         </div>
 
@@ -146,7 +181,7 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
                   <td className="px-3 py-2 font-bold text-slate-900">{category.name || 'Metrology Instrument'}</td>
                 </tr>
                 <tr>
-                  <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Make & Model</td>
+                  <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Make &amp; Model</td>
                   <td className="px-3 py-2 text-slate-900">{instrument.make} - {instrument.model}</td>
                 </tr>
                 <tr>
@@ -171,13 +206,13 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
           {/* Section 2: Owner & Verification Authority */}
           <div className="border border-slate-200 rounded-lg overflow-hidden font-sans">
             <div className="bg-slate-800 text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider">
-              2. Applicant & Inspection Verification Details
+              2. Applicant &amp; Inspection Verification Details
             </div>
             <table className="w-full text-xs text-left">
               <tbody className="divide-y divide-slate-200 bg-white">
                 <tr>
                   <td className="px-3 py-2 font-semibold text-slate-600 w-1/3 bg-slate-50">Registered Trader / Owner</td>
-                  <td className="px-3 py-2 font-bold text-slate-900">{owner.orgDetails?.companyName || owner.name || 'Authorized User'}</td>
+                  <td className="px-3 py-2 font-bold text-slate-900">{displayOwnerName}</td>
                 </tr>
                 <tr>
                   <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">GSTIN / Registration No.</td>
@@ -187,7 +222,7 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
                   <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Verification Outcome</td>
                   <td className="px-3 py-2 text-emerald-700 font-bold flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" />
-                    PASS — Maximum Permissible Error (MPE) Compliant & Security Seal Affixed
+                    PASS — Maximum Permissible Error (MPE) Compliant &amp; Security Seal Affixed
                   </td>
                 </tr>
               </tbody>
@@ -198,13 +233,19 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
         {/* Footer: QR Code + Digital Signature + Seal */}
         <div className="mt-8 pt-6 border-t-2 border-slate-200 font-sans grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
           
-          {/* QR Code Block */}
+          {/* QR Code Block — always use canvas-based QR for html2canvas compatibility */}
           <div className="flex flex-col items-center text-center p-3 bg-slate-50 rounded-xl border border-slate-200">
             <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-200">
               {qrCodeDataUrl ? (
-                <img src={qrCodeDataUrl} alt="Verification QR Code" className="w-24 h-24" />
+                <img
+                  src={qrCodeDataUrl}
+                  alt="Verification QR Code"
+                  className="w-24 h-24"
+                  crossOrigin="anonymous"
+                />
               ) : (
-                <QRCodeSVG
+                /* QRCodeCanvas renders to <canvas> — works correctly with html2canvas */
+                <QRCodeCanvas
                   value={verificationUrl}
                   size={96}
                   level="H"

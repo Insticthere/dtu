@@ -4,19 +4,27 @@ const path = require('path');
 const fs = require('fs');
 const Certificate = require('../models/Certificate');
 const Application = require('../models/Application');
-const { protect } = require('../middleware/auth');
 const { generateQRCodeDataUrl } = require('../services/qrService');
+
+// Helper to mask sensitive owner name: e.g. "Ramesh Sharma" -> "R****h S****a"
+const maskName = (name) => {
+  if (!name) return 'Valued Citizen';
+  return name.split(' ').map(word => {
+    if (word.length <= 2) return word;
+    return word[0] + '*'.repeat(Math.max(1, word.length - 2)) + word[word.length - 1];
+  }).join(' ');
+};
 
 // @route   GET /api/certificates/:certNumber
 // @desc    Get certificate details + QR code for viewing
-// @access  Public / Authenticated
+// @access  Public
 router.get('/:certNumber', async (req, res) => {
   try {
     const certificate = await Certificate.findOne({ certificateNumber: req.params.certNumber })
       .populate({
         path: 'applicationId',
         populate: [
-          { path: 'userId', select: 'name email phone orgDetails' },
+          { path: 'userId', select: 'name orgDetails' }, // Only select non-sensitive fields
           { path: 'instrumentId', populate: { path: 'categoryId' } },
           { path: 'inspectionRecordId', populate: { path: 'officerId', select: 'name role badgeNumber' } }
         ]
@@ -29,9 +37,24 @@ router.get('/:certNumber', async (req, res) => {
     // Generate dynamic QR Code Data URL
     const qrCodeDataUrl = await generateQRCodeDataUrl(certificate.verificationUrl);
 
+    // Build a sanitized certificate object — mask personal identity info for public view
+    const certObj = certificate.toObject();
+    const app = certObj.applicationId;
+    if (app && app.userId) {
+      // Mask full name for privacy on public page; keep company name
+      app.userId.maskedName = maskName(app.userId.orgDetails?.companyName || app.userId.name);
+      // Remove sensitive contact details
+      delete app.userId.email;
+      delete app.userId.phone;
+      // Remove address from orgDetails (keep companyName and gstNumber for official use)
+      if (app.userId.orgDetails) {
+        delete app.userId.orgDetails.address;
+      }
+    }
+
     res.json({
       success: true,
-      certificate,
+      certificate: certObj,
       qrCodeDataUrl,
     });
   } catch (err) {

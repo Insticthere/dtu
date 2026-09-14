@@ -133,18 +133,20 @@ const generateCertificatePDF = async ({ certificate, application, instrument, ca
 
       // Statutory Declaration
       doc.moveDown(0.5);
-      doc.rect(40, doc.y, 510, 45).fillAndStroke('#f8fafc', '#e2e8f0');
+      const declY = doc.y;
+      doc.rect(40, declY, 510, 45).fillAndStroke('#f8fafc', '#e2e8f0');
       doc.fontSize(7.5).font('Helvetica-Oblique').fillColor('#475569').text(
         'Statutory Declaration: Certified that the weighing/measuring instrument described above has been inspected, tested, and verified in accordance with the provisions of the Legal Metrology Act, 2009 and the Rules made thereunder, and found to satisfy statutory tolerances. The official security seal has been affixed.',
-        45, doc.y - 40, { width: 500, lineGap: 2 }
+        45, declY + 5, { width: 500, lineGap: 2 }
       );
 
       // Footer with QR Code and Official Stamp
       const footerY = 660;
+      const verifyUrl = certificate.verificationUrl || `https://e-metrology.gov.in/verify/${certificate.qrToken}`;
 
       // QR Code
       try {
-        const qrBuffer = await generateQRCodeBuffer(certificate.verificationUrl);
+        const qrBuffer = await generateQRCodeBuffer(verifyUrl);
         doc.image(qrBuffer, 45, footerY, { width: 90, height: 90 });
         doc.fontSize(7).font('Helvetica-Bold').fillColor('#1e3a8a').text('Scan to Verify Authenticity', 40, footerY + 95, { width: 100, align: 'center' });
       } catch (qrErr) {
@@ -153,7 +155,7 @@ const generateCertificatePDF = async ({ certificate, application, instrument, ca
 
       // Security Notice
       doc.fontSize(7.5).font('Helvetica').fillColor('#64748b').text(
-        `Digital Certificate ID: ${certificate.qrToken}\nTampering with or forging this certificate is punishable under Section 44 of the Act.\nVerify online at:\n${certificate.verificationUrl}`,
+        `Digital Certificate ID: ${certificate.qrToken}\nTampering with or forging this certificate is punishable under Section 44 of the Act.\nVerify online at:\n${verifyUrl}`,
         155, footerY + 15, { width: 220 }
       );
 
