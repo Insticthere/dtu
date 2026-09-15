@@ -381,6 +381,7 @@ const seedDatabase = async () => {
     const app1Id = new mongoose.Types.ObjectId();
     const app1Number = 'APP-2026-SC01';
     const cert1Number = 'LM-VER-2026-908123';
+    const qrToken1 = '4f8a92e10bc78d234a5b6c7d8e9f0123';
     const baseUrl = (process.env.BASE_URL || 'http://localhost:5173').replace(/\/+$/, '');
     const verificationUrl1 = `${baseUrl}/verify/${qrToken1}`.replace(/([^:]\/)\/+/g, '$1');
 
