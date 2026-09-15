@@ -12,16 +12,22 @@ import {
   UserCheck,
   Calendar,
   Building,
-  Plus
+  Plus,
+  CheckCircle2,
+  XCircle,
+  ShieldAlert,
+  BadgeCheck
 } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [summary, setSummary] = useState(null);
   const [applications, setApplications] = useState([]);
   const [officers, setOfficers] = useState([]);
+  const [allOfficers, setAllOfficers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [allocatingAppId, setAllocatingAppId] = useState(null);
   const [selectedOfficerId, setSelectedOfficerId] = useState('');
+  const [approvingId, setApprovingId] = useState(null);
 
   useEffect(() => {
     loadAdminData();
@@ -30,19 +36,35 @@ export default function AdminDashboard() {
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      const [sumRes, appRes, offRes] = await Promise.all([
+      const [sumRes, appRes, offRes, allOffRes] = await Promise.all([
         api.get('/dashboard/summary'),
         api.get('/applications'),
-        api.get('/users/officers')
+        api.get('/users/officers'),
+        api.get('/users').catch(() => ({ data: { users: [] } }))
       ]);
 
       setSummary(sumRes.data);
       setApplications(appRes.data.applications || []);
       setOfficers(offRes.data.officers || []);
+      // Filter only officer-role users from all users
+      const officerUsers = (allOffRes.data.users || []).filter(u => ['lmo', 'gatc'].includes(u.role));
+      setAllOfficers(officerUsers);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveOfficer = async (officerId, approve) => {
+    try {
+      setApprovingId(officerId);
+      await api.patch(`/users/${officerId}/approve`, { approved: approve });
+      loadAdminData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update officer status.');
+    } finally {
+      setApprovingId(null);
     }
   };
 
@@ -96,6 +118,13 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            to="/instruments/new"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold shadow-md transition-all border border-slate-700"
+          >
+            <Plus className="w-4 h-4 text-amber-400" />
+            Register Instrument
+          </Link>
           <Link
             to="/admin/categories"
             className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-xs font-bold shadow-md transition-all"
@@ -267,6 +296,91 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Officer Management Panel */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <BadgeCheck className="w-5 h-5 text-purple-700" />
+              Officer & GATC Centre Management
+            </h2>
+            <p className="text-xs text-slate-500">Approve, verify or revoke access for LMO Inspectors and GATC Testing Centres</p>
+          </div>
+        </div>
+
+        {allOfficers.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 text-sm">No LMO/GATC officer accounts registered yet.</div>
+        ) : (
+          <div className="divide-y divide-slate-100 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
+                <tr>
+                  <th className="px-5 py-3">Name / Badge</th>
+                  <th className="px-5 py-3">Role</th>
+                  <th className="px-5 py-3">Email</th>
+                  <th className="px-5 py-3">Jurisdiction</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {allOfficers.map((off) => (
+                  <tr key={off._id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="font-bold text-slate-900">{off.name}</div>
+                      <div className="text-[11px] font-mono text-slate-500">{off.badgeNumber || 'No badge assigned'}</div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                        off.role === 'gatc'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : 'bg-blue-50 text-blue-800 border-blue-200'
+                      }`}>
+                        {off.role === 'gatc' ? 'GATC Lab' : 'LMO Inspector'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">{off.email}</td>
+                    <td className="px-5 py-4 text-slate-600">{off.jurisdictionDistrict || off.orgDetails?.district || 'N/A'}</td>
+                    <td className="px-5 py-4">
+                      {off.isApproved ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3" /> Verified & Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                          <ShieldAlert className="w-3 h-3" /> Pending Approval
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right space-x-2">
+                      {off.isApproved ? (
+                        <button
+                          onClick={() => handleApproveOfficer(off._id, false)}
+                          disabled={approvingId === off._id}
+                          className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors flex items-center gap-1 ml-auto"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          {approvingId === off._id ? 'Revoking...' : 'Revoke Access'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleApproveOfficer(off._id, true)}
+                          disabled={approvingId === off._id}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm disabled:opacity-50 transition-colors flex items-center gap-1 ml-auto"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          {approvingId === off._id ? 'Approving...' : 'Approve Officer'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
     </div>

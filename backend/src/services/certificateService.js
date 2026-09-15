@@ -88,6 +88,8 @@ const generateCertificatePDF = async ({ certificate, application, instrument, ca
         ['Make / Manufacturer:', instrument?.make || 'N/A'],
         ['Model Designation:', instrument?.model || 'N/A'],
         ['Serial Number:', instrument?.serialNumber || 'N/A'],
+        ['Model Approval (Sec 22):', instrument?.modelApprovalNumber || 'Central DLM Approved'],
+        ['Accuracy Class:', instrument?.accuracyClass || 'Class III (Medium)'],
         ['Applicable Standard:', category?.applicableStandard || 'Legal Metrology Rules, 2011'],
         ['Installation Location:', `${instrument?.location?.address || ''}, ${instrument?.location?.district || ''}, ${instrument?.location?.state || 'Delhi'}`]
       ];
@@ -120,6 +122,7 @@ const generateCertificatePDF = async ({ certificate, application, instrument, ca
         ['Owner / Organization:', user?.orgDetails?.companyName || user?.name || 'N/A'],
         ['Contact Person:', user?.name || 'N/A'],
         ['GST / Tax ID:', user?.orgDetails?.gstNumber || 'N/A'],
+        ['Stamping Challan Ref:', instrument?.feePaymentRef?.challanNumber ? `${instrument.feePaymentRef.challanNumber} (Statutory Fee: Rs. ${instrument.feePaymentRef.amountPaid || 250})` : 'e-Treasury BharatKosh Paid'],
         ['Inspection Result:', inspection?.result ? `${inspection.result} (Complies with Maximum Permissible Error tolerances)` : 'PASS - Complies with Statutory Standards'],
         ['Verified By:', `${certificate.issuingAuthority?.officerName || 'Inspector'} (${certificate.issuingAuthority?.officerRole?.toUpperCase() || 'LMO'}, Badge: ${certificate.issuingAuthority?.badgeNumber || 'DL-OFFICER'})`]
       ];

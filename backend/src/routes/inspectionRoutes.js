@@ -36,6 +36,14 @@ router.post('/:id/inspection', protect, authorize('lmo', 'gatc', 'admin'), uploa
       return res.status(400).json({ success: false, message: "Result must be 'Pass' or 'Fail'" });
     }
 
+    // GATC centre must be verified/approved by admin before issuing certificates
+    if (req.user.role === 'gatc' && !req.user.isApproved) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your GATC testing centre has not been verified and approved by the Admin. Please contact the Metrology Department.',
+      });
+    }
+
     let observations = {};
     if (typeof rawObservations === 'string') {
       try {
@@ -105,8 +113,10 @@ router.post('/:id/inspection', protect, authorize('lmo', 'gatc', 'admin'), uploa
       validUntil.setMonth(validUntil.getMonth() + validityMonths);
 
       const certNumber = generateCertificateNumber();
-      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-      const verificationUrl = `${baseUrl}/verify/${qrToken}`;
+      // FRONTEND_URL env var (e.g. https://e-metrology.example.com) or dev frontend port 5173
+      const frontendBase = process.env.FRONTEND_URL ||
+        `${req.protocol}://${req.hostname}${req.hostname === 'localhost' ? ':5173' : ''}`;
+      const verificationUrl = `${frontendBase}/verify/${qrToken}`;
 
       // 3. Create Certificate Document in DB
       certificate = await Certificate.create({

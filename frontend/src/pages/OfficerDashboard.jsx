@@ -96,9 +96,11 @@ export default function OfficerDashboard() {
           </p>
         </div>
 
-        <div className="text-xs bg-slate-50 border border-slate-200 p-3 rounded-xl">
-          <div className="font-bold text-slate-700">Department Mandate</div>
-          <div className="text-slate-500">Legal Metrology Act, 2009 • Verification & Stamping</div>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:block text-xs bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+            <div className="font-bold text-slate-700">Department Mandate</div>
+            <div className="text-slate-500">Legal Metrology Act, 2009</div>
+          </div>
         </div>
       </div>
 

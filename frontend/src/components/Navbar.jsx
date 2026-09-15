@@ -114,7 +114,7 @@ export default function Navbar() {
                     </>
                   )}
 
-                  {(user.role === 'lmo' || user.role === 'gatc' || user.role === 'admin') && (
+                  {(user.role === 'lmo' || user.role === 'gatc') && (
                     <>
                       <Link
                         to="/officer"
@@ -140,6 +140,15 @@ export default function Navbar() {
                         Admin Dashboard
                       </Link>
                       <Link
+                        to="/officer"
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                          location.pathname === '/officer' ? 'bg-blue-900 text-white' : 'text-slate-200 hover:bg-slate-800'
+                        }`}
+                      >
+                        <LayoutDashboard className="w-4 h-4" />
+                        Inspection Queue
+                      </Link>
+                      <Link
                         to="/admin/categories"
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                           location.pathname === '/admin/categories' ? 'bg-blue-900 text-white' : 'text-slate-200 hover:bg-slate-800'
@@ -147,6 +156,15 @@ export default function Navbar() {
                       >
                         <Layers className="w-4 h-4" />
                         Category Schemas
+                      </Link>
+                      <Link
+                        to="/instruments/new"
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                          location.pathname === '/instruments/new' ? 'bg-blue-900 text-white' : 'text-slate-200 hover:bg-slate-800'
+                        }`}
+                      >
+                        <PlusCircle className="w-4 h-4 text-amber-400" />
+                        Register Instrument
                       </Link>
                     </>
                   )}
@@ -258,14 +276,16 @@ export default function Navbar() {
                     </Link>
                   </>
                 )}
-                {(user.role === 'lmo' || user.role === 'gatc' || user.role === 'admin') && (
-                  <Link
-                    to="/officer"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-slate-800"
-                  >
-                    Officer Queue
-                  </Link>
+                {(user.role === 'lmo' || user.role === 'gatc') && (
+                  <>
+                    <Link
+                      to="/officer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-slate-800"
+                    >
+                      Officer Queue
+                    </Link>
+                  </>
                 )}
                 {user.role === 'admin' && (
                   <>
@@ -277,11 +297,25 @@ export default function Navbar() {
                       Admin Dashboard
                     </Link>
                     <Link
+                      to="/officer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-slate-800"
+                    >
+                      Officer Queue
+                    </Link>
+                    <Link
                       to="/admin/categories"
                       onClick={() => setMobileMenuOpen(false)}
                       className="block px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-slate-800"
                     >
                       Category Schemas
+                    </Link>
+                    <Link
+                      to="/instruments/new"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-3 py-2 rounded-md text-sm font-medium text-amber-300 hover:bg-slate-800"
+                    >
+                      + Register Instrument
                     </Link>
                   </>
                 )}

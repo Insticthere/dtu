@@ -41,8 +41,9 @@ router.get('/:certNumber', async (req, res) => {
     const certObj = certificate.toObject();
     const app = certObj.applicationId;
     if (app && app.userId) {
-      // Mask full name for privacy on public page; keep company name
-      app.userId.maskedName = maskName(app.userId.orgDetails?.companyName || app.userId.name);
+      // Mask personal name for privacy; also expose company name for official records
+      app.userId.maskedName = maskName(app.userId.name || app.userId.orgDetails?.companyName);
+      app.userId.companyName = app.userId.orgDetails?.companyName || '';
       // Remove sensitive contact details
       delete app.userId.email;
       delete app.userId.phone;

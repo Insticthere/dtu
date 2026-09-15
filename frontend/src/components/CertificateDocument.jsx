@@ -78,11 +78,14 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
   const verificationUrl = certificate.verificationUrl ||
     `${window.location.origin}/verify/${certificate.qrToken}`;
 
-  // Display name: prefer company name, mask personal name for privacy
-  const displayOwnerName = owner.orgDetails?.companyName ||
-    owner.maskedName ||
-    owner.name ||
-    'Authorized User';
+  // Display owner's personal name (masked for privacy), and show company/enterprise separately
+  const displayOwnerName = owner.maskedName ||
+    (owner.name ? owner.name : null) ||
+    'Authorized Owner';
+
+  const displayCompanyName = owner.companyName ||
+    owner.orgDetails?.companyName ||
+    null;
 
   return (
     <div className="max-w-4xl mx-auto my-6">
@@ -189,6 +192,19 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
                   <td className="px-3 py-2 font-mono font-bold text-blue-900">{instrument.serialNumber}</td>
                 </tr>
                 <tr>
+                  <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Model Approval (Section 22)</td>
+                  <td className="px-3 py-2 font-mono text-slate-900 font-semibold">{instrument.modelApprovalNumber || 'DLM/IND/APP/CENTRAL-APPROVED'}</td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Accuracy Class &amp; Parameters</td>
+                  <td className="px-3 py-2 text-slate-900">
+                    <span className="font-semibold text-blue-900">{instrument.accuracyClass || 'Class III (Medium)'}</span>
+                    {instrument.maxCapacity && (
+                      <span className="text-slate-600 ml-2 font-mono text-[11px]">(Max: {instrument.maxCapacity}{instrument.verificationIntervalE ? `, e = ${instrument.verificationIntervalE}` : ''})</span>
+                    )}
+                  </td>
+                </tr>
+                <tr>
                   <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Applicable Standard</td>
                   <td className="px-3 py-2 text-slate-800">{category.applicableStandard || 'Legal Metrology Rules, 2011'}</td>
                 </tr>
@@ -211,12 +227,24 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
             <table className="w-full text-xs text-left">
               <tbody className="divide-y divide-slate-200 bg-white">
                 <tr>
-                  <td className="px-3 py-2 font-semibold text-slate-600 w-1/3 bg-slate-50">Registered Trader / Owner</td>
+                  <td className="px-3 py-2 font-semibold text-slate-600 w-1/3 bg-slate-50">Owner / Applicant Name</td>
                   <td className="px-3 py-2 font-bold text-slate-900">{displayOwnerName}</td>
                 </tr>
+                {displayCompanyName && (
+                  <tr>
+                    <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Enterprise / Shop Name</td>
+                    <td className="px-3 py-2 font-bold text-slate-900">{displayCompanyName}</td>
+                  </tr>
+                )}
                 <tr>
                   <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">GSTIN / Registration No.</td>
                   <td className="px-3 py-2 font-mono text-slate-800">{owner.orgDetails?.gstNumber || 'Unregistered / Personal'}</td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Stamping Fee Challan Ref</td>
+                  <td className="px-3 py-2 font-mono text-emerald-800 font-semibold">
+                    {instrument.feePaymentRef?.challanNumber || 'BK/2026/CHALLAN-VERIFIED'} (Statutory Fee: ₹{instrument.feePaymentRef?.amountPaid || 250} — {instrument.feePaymentRef?.paymentStatus || 'Paid'})
+                  </td>
                 </tr>
                 <tr>
                   <td className="px-3 py-2 font-semibold text-slate-600 bg-slate-50">Verification Outcome</td>

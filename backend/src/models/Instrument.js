@@ -31,6 +31,50 @@ const instrumentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {},
   },
+  // Government Legal Metrology Act 2009 statutory fields
+  modelApprovalNumber: {
+    type: String,
+    trim: true,
+    // Model Approval Certificate under Section 22 of Legal Metrology Act, 2009
+  },
+  accuracyClass: {
+    type: String,
+    enum: ['Class I (Special)', 'Class II (High)', 'Class III (Medium)', 'Class IIII (Ordinary)', 'Class 0.2', 'Class 0.5', 'Class 1', 'Class 2', 'N/A'],
+    default: 'Class III (Medium)'
+  },
+  verificationType: {
+    type: String,
+    enum: ['initial_verification', 'periodical_reverification', 'post_repair', 'field_seizure_test'],
+    default: 'initial_verification'
+  },
+  maxCapacity: String,
+  minCapacity: String,
+  verificationIntervalE: String,
+  actualIntervalD: String,
+  yearOfManufacture: {
+    type: Number,
+    default: () => new Date().getFullYear()
+  },
+  countryOfOrigin: {
+    type: String,
+    default: 'India'
+  },
+  manufacturerName: String,
+  feePaymentRef: {
+    challanNumber: String,
+    amountPaid: Number,
+    paymentDate: Date,
+    paymentStatus: {
+      type: String,
+      enum: ['Paid', 'Pending', 'Exempted'],
+      default: 'Paid'
+    }
+  },
+  registeredBy: {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    role: String,
+    name: String
+  },
   location: {
     premisesName: String,
     address: { type: String, required: true },

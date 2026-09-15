@@ -78,7 +78,7 @@ router.get('/:qrToken', async (req, res) => {
       await certificate.save();
     }
 
-    const maskedOwnerName = maskName(user?.orgDetails?.companyName || user?.name || 'Owner');
+    const maskedOwnerName = maskName(user?.name || user?.orgDetails?.companyName || 'Owner');
 
     res.json({
       success: true,
