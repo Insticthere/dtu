@@ -34,8 +34,12 @@ router.get('/:certNumber', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Certificate not found' });
     }
 
+    const rawBase = (process.env.BASE_URL || 'http://localhost:5173').replace(/\/+$/, '');
+    let verifyUrl = certificate.verificationUrl || `${rawBase}/verify/${certificate.qrToken}`;
+    verifyUrl = verifyUrl.replace(/([^:]\/)\/+/g, '$1');
+
     // Generate dynamic QR Code Data URL
-    const qrCodeDataUrl = await generateQRCodeDataUrl(certificate.verificationUrl);
+    const qrCodeDataUrl = await generateQRCodeDataUrl(verifyUrl);
 
     // Build a sanitized certificate object — mask personal identity info for public view
     const certObj = certificate.toObject();

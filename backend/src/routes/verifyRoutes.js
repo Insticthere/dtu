@@ -17,15 +17,20 @@ const maskName = (name) => {
 // IMPORTANT: This route MUST be before /:qrToken to avoid being swallowed by the wildcard
 router.get('/search/:certNumber', async (req, res) => {
   try {
-    const certNumber = req.params.certNumber.trim();
-    const certificate = await Certificate.findOne({
-      certificateNumber: { $regex: new RegExp(`^${certNumber}$`, 'i') }
+    const rawParam = req.params.certNumber.trim();
+    const regexPattern = `^${rawParam.replace(/[-_]/g, '[-_]')}$`;
+    let certificate = await Certificate.findOne({
+      certificateNumber: { $regex: new RegExp(regexPattern, 'i') }
     });
+
+    if (!certificate) {
+      certificate = await Certificate.findOne({ qrToken: rawParam });
+    }
 
     if (!certificate) {
       return res.status(404).json({
         success: false,
-        message: `No certificate found matching number '${certNumber}'`
+        message: `No certificate found matching '${rawParam}'`
       });
     }
 
@@ -44,9 +49,9 @@ router.get('/search/:certNumber', async (req, res) => {
 // @access  Public
 router.get('/:qrToken', async (req, res) => {
   try {
-    const { qrToken } = req.params;
+    const rawToken = req.params.qrToken.trim();
 
-    const certificate = await Certificate.findOne({ qrToken })
+    let certificate = await Certificate.findOne({ qrToken: rawToken })
       .populate({
         path: 'applicationId',
         populate: [
@@ -55,6 +60,21 @@ router.get('/:qrToken', async (req, res) => {
           { path: 'inspectionRecordId', select: 'result conductedAt workingStandardsUsed' }
         ]
       });
+
+    // If not found by qrToken, also check if rawToken is a Certificate Number (e.g. LM-VER-2026-908123)
+    if (!certificate) {
+      const regexPattern = `^${rawToken.replace(/[-_]/g, '[-_]')}$`;
+      certificate = await Certificate.findOne({
+        certificateNumber: { $regex: new RegExp(regexPattern, 'i') }
+      }).populate({
+        path: 'applicationId',
+        populate: [
+          { path: 'userId', select: 'name orgDetails' },
+          { path: 'instrumentId', populate: { path: 'categoryId' } },
+          { path: 'inspectionRecordId', select: 'result conductedAt workingStandardsUsed' }
+        ]
+      });
+    }
 
     if (!certificate) {
       return res.status(404).json({
@@ -85,6 +105,7 @@ router.get('/:qrToken', async (req, res) => {
       valid: currentStatus === 'Active',
       data: {
         certificateNumber: certificate.certificateNumber,
+        qrToken: certificate.qrToken,
         status: currentStatus,
         category: category?.name || 'Standard Metrology Instrument',
         applicableStandard: category?.applicableStandard || 'Legal Metrology Act, 2009',
@@ -92,12 +113,15 @@ router.get('/:qrToken', async (req, res) => {
         model: instrument?.model || 'Unknown',
         serialNumber: instrument?.serialNumber || 'N/A',
         maskedOwnerName: maskedOwnerName,
+        companyName: user?.orgDetails?.companyName || '',
         premisesLocation: `${instrument?.location?.district || ''}, ${instrument?.location?.state || 'Delhi'}`,
         issuedDate: certificate.issuedDate,
         validUntil: certificate.validUntil,
         issuingAuthority: certificate.issuingAuthority,
         verifiedAt: new Date(),
         inspectionResult: app?.inspectionRecordId?.result || 'Pass',
+        pdfPath: certificate.pdfPath || null,
+        downloadUrl: `/api/certificates/${certificate.certificateNumber}/download`,
       }
     });
   } catch (err) {

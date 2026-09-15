@@ -115,9 +115,10 @@ router.post('/:id/inspection', protect, authorize('lmo', 'gatc', 'admin'), uploa
       const certNumber = generateCertificateNumber();
       // BASE_URL is set in .env (e.g. https://dtu-a8sz.onrender.com)
       // Falls back to localhost:5173 only in local development
-      const frontendBase = process.env.BASE_URL ||
+      const rawBase = process.env.BASE_URL ||
         (req.hostname === 'localhost' ? 'http://localhost:5173' : `${req.protocol}://${req.hostname}`);
-      const verificationUrl = `${frontendBase}/verify/${qrToken}`;
+      const frontendBase = rawBase.replace(/\/+$/, '');
+      const verificationUrl = `${frontendBase}/verify/${qrToken}`.replace(/([^:]\/)\/+/g, '$1');
 
       // 3. Create Certificate Document in DB
       certificate = await Certificate.create({

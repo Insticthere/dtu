@@ -22,6 +22,12 @@ import CertificatePage from './pages/CertificatePage';
 import PublicVerifyPage from './pages/PublicVerifyPage';
 
 export default function App() {
+  // Normalize consecutive slashes if present
+  if (typeof window !== 'undefined' && window.location.pathname.includes('//')) {
+    const cleanPath = window.location.pathname.replace(/\/+/g, '/');
+    window.history.replaceState(null, '', cleanPath + window.location.search + window.location.hash);
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -35,6 +41,7 @@ export default function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify" element={<PublicVerifyPage />} />
               <Route path="/verify/:qrToken" element={<PublicVerifyPage />} />
+              <Route path="/verify/*" element={<PublicVerifyPage />} />
               <Route path="/certificates/:certNumber" element={<CertificatePage />} />
 
               {/* Trader / User Routes */}

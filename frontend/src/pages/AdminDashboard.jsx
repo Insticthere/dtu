@@ -77,6 +77,8 @@ export default function AdminDashboard() {
       const res = await api.post('/admin/reset-demo');
       alert(`✅ ${res.data.message}\n\nYou will be logged out. Log back in with:\n• Admin: admin@metrology.gov.in\n• Password: password123`);
       // Clear JWT and reload — the admin user was re-created with a new _id
+      localStorage.removeItem('lm_token');
+      localStorage.removeItem('lm_user');
       localStorage.removeItem('token');
       window.location.href = '/login';
     } catch (err) {

@@ -145,8 +145,9 @@ const generateCertificatePDF = async ({ certificate, application, instrument, ca
 
       // Footer with QR Code and Official Stamp
       const footerY = 660;
-      const verifyUrl = certificate.verificationUrl ||
-        `${process.env.BASE_URL || 'http://localhost:5173'}/verify/${certificate.qrToken}`;
+      const rawBase = (process.env.BASE_URL || 'http://localhost:5173').replace(/\/+$/, '');
+      let verifyUrl = certificate.verificationUrl || `${rawBase}/verify/${certificate.qrToken}`;
+      verifyUrl = verifyUrl.replace(/([^:]\/)\/+/g, '$1');
 
       // QR Code
       try {

@@ -381,9 +381,8 @@ const seedDatabase = async () => {
     const app1Id = new mongoose.Types.ObjectId();
     const app1Number = 'APP-2026-SC01';
     const cert1Number = 'LM-VER-2026-908123';
-    const qrToken1 = '4f8a92e10bc78d234a5b6c7d8e9f0123';
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5173';
-    const verificationUrl1 = `${baseUrl}/verify/${qrToken1}`;
+    const baseUrl = (process.env.BASE_URL || 'http://localhost:5173').replace(/\/+$/, '');
+    const verificationUrl1 = `${baseUrl}/verify/${qrToken1}`.replace(/([^:]\/)\/+/g, '$1');
 
     const validUntil1 = new Date();
     validUntil1.setMonth(validUntil1.getMonth() + 11);
@@ -473,7 +472,7 @@ const seedDatabase = async () => {
     const app2Number = 'APP-2026-BA02';
     const cert2Number = 'LM-VER-2026-447819';
     const qrToken2 = '8c2f1a7b9e0d456789abcdef11223344';
-    const verificationUrl2 = `${baseUrl}/verify/${qrToken2}`;
+    const verificationUrl2 = `${baseUrl}/verify/${qrToken2}`.replace(/([^:]\/)\/+/g, '$1');
 
     const validUntil2 = new Date();
     validUntil2.setMonth(validUntil2.getMonth() + 5);

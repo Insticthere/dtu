@@ -75,8 +75,9 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
     }
   };
 
-  const verificationUrl = certificate.verificationUrl ||
+  let verificationUrl = certificate.verificationUrl ||
     `${window.location.origin}/verify/${certificate.qrToken}`;
+  verificationUrl = verificationUrl.replace(/([^:]\/)\/+/g, '$1');
 
   // Display owner's personal name (masked for privacy), and show company/enterprise separately
   const displayOwnerName = owner.maskedName ||
