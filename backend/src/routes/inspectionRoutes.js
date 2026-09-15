@@ -113,9 +113,10 @@ router.post('/:id/inspection', protect, authorize('lmo', 'gatc', 'admin'), uploa
       validUntil.setMonth(validUntil.getMonth() + validityMonths);
 
       const certNumber = generateCertificateNumber();
-      // FRONTEND_URL env var (e.g. https://e-metrology.example.com) or dev frontend port 5173
-      const frontendBase = process.env.FRONTEND_URL ||
-        `${req.protocol}://${req.hostname}${req.hostname === 'localhost' ? ':5173' : ''}`;
+      // BASE_URL is set in .env (e.g. https://dtu-a8sz.onrender.com)
+      // Falls back to localhost:5173 only in local development
+      const frontendBase = process.env.BASE_URL ||
+        (req.hostname === 'localhost' ? 'http://localhost:5173' : `${req.protocol}://${req.hostname}`);
       const verificationUrl = `${frontendBase}/verify/${qrToken}`;
 
       // 3. Create Certificate Document in DB

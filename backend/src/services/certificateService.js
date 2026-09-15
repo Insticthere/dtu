@@ -145,7 +145,8 @@ const generateCertificatePDF = async ({ certificate, application, instrument, ca
 
       // Footer with QR Code and Official Stamp
       const footerY = 660;
-      const verifyUrl = certificate.verificationUrl || `https://e-metrology.gov.in/verify/${certificate.qrToken}`;
+      const verifyUrl = certificate.verificationUrl ||
+        `${process.env.BASE_URL || 'http://localhost:5173'}/verify/${certificate.qrToken}`;
 
       // QR Code
       try {
