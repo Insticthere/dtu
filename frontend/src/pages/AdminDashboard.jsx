@@ -28,6 +28,8 @@ export default function AdminDashboard() {
   const [allocatingAppId, setAllocatingAppId] = useState(null);
   const [selectedOfficerId, setSelectedOfficerId] = useState('');
   const [approvingId, setApprovingId] = useState(null);
+  const [resetting, setResetting] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     loadAdminData();
@@ -65,6 +67,21 @@ export default function AdminDashboard() {
       alert(err.response?.data?.message || 'Failed to update officer status.');
     } finally {
       setApprovingId(null);
+    }
+  };
+
+  const handleResetDemo = async () => {
+    try {
+      setResetting(true);
+      setShowResetConfirm(false);
+      const res = await api.post('/admin/reset-demo');
+      alert(`✅ ${res.data.message}\n\nYou will be logged out. Log back in with:\n• Admin: admin@metrology.gov.in\n• Password: password123`);
+      // Clear JWT and reload — the admin user was re-created with a new _id
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    } catch (err) {
+      alert(`Reset failed: ${err.response?.data?.message || err.message}`);
+      setResetting(false);
     }
   };
 
@@ -117,7 +134,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Link
             to="/instruments/new"
             className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold shadow-md transition-all border border-slate-700"
@@ -132,8 +149,58 @@ export default function AdminDashboard() {
             <Layers className="w-4 h-4" />
             Manage Dynamic Categories
           </Link>
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            disabled={resetting}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-rose-700 hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow-md transition-all border border-rose-500 disabled:opacity-60"
+            title="Wipe all data and re-seed the demo database"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            {resetting ? 'Resetting…' : 'Reset Demo Data'}
+          </button>
         </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="bg-rose-700 px-6 py-4 flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-white" />
+              <h2 className="text-white font-black text-lg">⚠️ Reset Demo Database?</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-slate-700 text-sm leading-relaxed">
+                This will <strong>permanently delete ALL data</strong> — instruments, applications, certificates, users, and notifications — and replace everything with fresh seed data.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 space-y-1">
+                <div className="font-bold mb-1">After reset, log in with:</div>
+                <div>Admin: <span className="font-mono">admin@metrology.gov.in</span></div>
+                <div>LMO: <span className="font-mono">lmo.verma@metrology.gov.in</span></div>
+                <div>GATC: <span className="font-mono">gatc.lab@testcentre.org</span></div>
+                <div>Password for all: <span className="font-mono font-bold">password123</span></div>
+              </div>
+              <p className="text-xs text-slate-500">
+                ✅ All QR codes in the new seed data will point to: <code className="bg-slate-100 px-1 rounded">{window.location.origin}</code>
+              </p>
+            </div>
+            <div className="px-6 pb-6 flex gap-3 justify-end">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetDemo}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold shadow transition-colors"
+              >
+                Yes, Reset Everything
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* State-Wide Metrics Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
