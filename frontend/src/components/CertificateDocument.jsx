@@ -1,12 +1,8 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Printer, Download, ShieldCheck, CheckCircle2, Award, Calendar, Hash, UserCheck } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { Printer, ShieldCheck, CheckCircle2, Award, Calendar, Hash, UserCheck } from 'lucide-react';
 
 export default function CertificateDocument({ certificate, application, qrCodeDataUrl }) {
-  const certRef = useRef(null);
-
   if (!certificate) return null;
 
   const app = application || certificate.applicationId || {};
@@ -17,62 +13,6 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleDownloadPDF = async () => {
-    // If backend-generated PDF is available, download directly
-    if (certificate.pdfPath) {
-      window.open(`/api/certificates/${certificate.certificateNumber}/download`, '_blank');
-      return;
-    }
-
-    // Fallback: Client-side PDF generation using html2canvas + jsPDF
-    if (!certRef.current) return;
-    try {
-      const element = certRef.current;
-
-      // html2canvas options: useCORS for external assets, scale for quality
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      // Add additional pages if content overflows
-      while (heightLeft > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`Certificate_${certificate.certificateNumber}.pdf`);
-    } catch (err) {
-      console.error('Error generating PDF:', err);
-      // Final fallback: browser print dialog
-      window.print();
-    }
   };
 
   let verificationUrl = certificate.verificationUrl ||
@@ -104,20 +44,12 @@ export default function CertificateDocument({ certificate, application, qrCodeDa
             <Printer className="w-4 h-4" />
             Print
           </button>
-          <button
-            onClick={handleDownloadPDF}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Download PDF
-          </button>
         </div>
       </div>
 
       {/* Printable Certificate Sheet */}
       <div
         id="printable-certificate"
-        ref={certRef}
         className="bg-white p-8 sm:p-12 border-8 border-double border-blue-900 shadow-2xl rounded-sm relative text-slate-800"
         style={{ fontFamily: 'Georgia, serif' }}
       >

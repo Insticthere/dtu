@@ -13,7 +13,6 @@ import {
   Award,
   ChevronDown,
   ChevronUp,
-  Download,
   ExternalLink,
   Info
 } from 'lucide-react';
@@ -243,18 +242,9 @@ export default function PublicVerifyPage() {
 
           {/* Actions */}
           <div className="p-4 border-t border-slate-200 flex flex-wrap gap-2">
-            <a
-              href={`/api/certificates/${result.certificateNumber}/download`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Download PDF
-            </a>
             <Link
               to={`/certificates/${result.certificateNumber}`}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               Full Certificate Page
